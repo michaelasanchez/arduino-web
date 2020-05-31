@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- <link rel="icon" href="../../favicon.ico"> -->
+
+    <title>Yun Control Panel</title>
+
+    <!-- Bootstrap core CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+
+
+    <!-- Custom styles for this template -->
+    <link href="css/control.css" rel="stylesheet">
+  </head>
+
+  <body>
+	
+	<div class="container">
+
+		<div class="row">
+			
+			<div class="col-sm-3">
+				<h6 class="header">Digital Pins</h6>
+
+				<div id="digitalControl"></div>		
+			</div>
+
+			<div class="col-md-3">
+				<h6 class="header">Analog Pins</h6>
+
+				<div id="analogControl"></div>
+	
+				<br>			
+				<h6>Output</h6>
+
+				<input id="output" class="form-control" type="text" readonly>
+				<br>
+			</div>
+		
+		</div><!-- /row -->
+
+	</div> <!-- /container -->
+
+
+	<!-- Bootstrap core JavaScript
+	================================================== -->
+	<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
+	</body>
+</html>
+
+<script>
+	
+	// this is garbge for now
+	var pins = new Array(14);
+	//      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13]
+	pins = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0]
+	
+	
+	// Loop through "active" digital pins
+	for (var i = 7; i <= 12; i++) {
+	
+		// Draw pin list
+		$('#digitalControl').append('<div class="form-check"><label class="form-check-label"><input type="checkbox" id="check' + i + '" class="form-check-input"> Pin ' + i + '</label><span><small id="load' + i + '" class="form-text text-muted">Checking...</small></span></div>');
+
+		// Set pin mode to OUTPUT
+		$.get('/arduino/mode/' + i + '/output');
+
+		// Read digital pin
+		$.get('/arduino/digital/' + i, function(data) {
+
+			var comma = data.indexOf(',');
+			var pin = data.substr(0, comma);
+			var status = data.substr(comma + 1, comma + 2);
+			
+			// Mark 'on' pin with check
+			if (status == 1) {
+				$('#check' + pin).prop('checked', true);
+			}
+			
+			// Hide 'Checking...' text
+			$('#load' + pin).prop('hidden', true);
+		});
+
+		// Toggle pin - Checkbox Event
+		$('#check' + i).change(function() {
+		
+			// Determine pin num	
+			var pinString = $(this).attr('id');
+			var pin = pinString.substr(5);
+
+			// Set digital pin to checkbox state
+			if ($(this).prop('checked')) {
+				$.get('/arduino/digital/' + pin + '/1');
+			} else {
+				$.get('/arduino/digital/' + pin + '/0');
+			}
+		});
+	}
+
+	// Loop through "active" analog pins
+	for (var i = 2; i <= 5; i++) {
+		
+		// Draw pin list
+		$('#analogControl').append('<form class="form-inline"><div class="form-group"><p class="form-control-static">Pin ' + i + '</p></div><div class="form-group"><button type="button" id="read' + i + '" class="form-control btn btn-secondary">Read</button></div></form>');
+		
+		// Set mode to INPUT
+		$.get('/arduino/mode/' + i + '/input');
+
+		// Read button - Click Event
+		$('#read' + i).click(function() {
+	
+			// Determine pin num	
+			var pinString = $(this).attr('id');
+			var pin = pinString.substr(4);
+
+			// Analog read
+			$.get('/arduino/analog/' + pin, function(data) {
+
+				$('#output').val(data);
+			});
+		
+		});
+	}
+
+</script>
